@@ -211,17 +211,17 @@ class cfunc_graph_t: # alas we can't inherit gdl_graph_t
             out.write("}\n")
 
     def dump(self):
-        msg("%d items:" % len(self.items))
+        idaapi.msg("%d items:" % len(self.items))
         for i in self.items:
-            msg("\t%s (%08x)" % (i, i.ea))
+            idaapi.msg("\t%s (%08x)" % (i, i.ea))
 
-        msg("succs:")
+        idaapi.msg("succs:")
         for s in self.succs:
-            msg("\t%s" % s)
+            idaapi.msg("\t%s" % s)
 
-        msg("preds:")
+        idaapi.msg("preds:")
         for p in self.preds:
-            msg("\t%s" % p)
+            idaapi.msg("\t%s" % p)
 
 
 class graph_builder_t(ida_hexrays.ctree_parentee_t):
@@ -306,7 +306,7 @@ class Hrgraph(idaapi.plugin_t):
     def init(self):
         self.vds5_hooks = None
         if not ida_hexrays.init_hexrays_plugin():
-            msg("hexrays-graph: hexrays is not available.")
+            idaapi.msg("hexrays-graph: hexrays is not available.")
             return idaapi.PLUGIN_SKIP
             
         ida_kernwin.register_action(
