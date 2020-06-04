@@ -170,10 +170,10 @@ class cfunc_graph_t: # alas we can't inherit gdl_graph_t
 
     def gen_gdl(self, fname):
         with open(fname, "wb") as out:
-            out.write("graph: {\n")
+            out.write(b"graph: {\n")
 
-            out.write("// *** nodes\n")
-            for n in xrange(len(self.items)):
+            out.write(b"// *** nodes\n")
+            for n in range(len(self.items)):
                 item = self.items[n]
                 node_label = self.get_node_label(n)
                 node_props = [""]
@@ -182,17 +182,19 @@ class cfunc_graph_t: # alas we can't inherit gdl_graph_t
                 color = self.get_node_color(n)
                 if color is not None:
                     node_props.append("color: %s" % get_color_name(color))
-                out.write("""node: { title: "%d" label: "%d: %s" %s}\n""" % (
+                #properties = " ".join(node_props)
+                node = "node: { title: \"%d\" label: \"%d: %s\" %s}\n" % (
                     n,
                     n,
                     node_label,
-                    " ".join(node_props)))
+                    " ".join(node_props))
+                out.write(bytes(node, encoding="utf-8"))
 
-            out.write("// *** edges\n")
-            for n in xrange(len(self.items)):
+            out.write(b"// *** edges\n")
+            for n in range(len(self.items)):
                 item = self.items[n]
-                out.write("// edges %d -> ?\n" % n)
-                for i in xrange(self.nsucc(n)):
+                out.write(b"// edges %d -> ?\n" % n)
+                for i in range(self.nsucc(n)):
                     t = self.succ(n, i)
                     label = ""
                     if item.is_expr():
@@ -205,10 +207,11 @@ class cfunc_graph_t: # alas we can't inherit gdl_graph_t
                             label = "z"
                         if label:
                             label = """ label: "%s" """ % label
-                    out.write("""edge: { sourcename: "%s" targetname: "%s"%s}\n""" % (
-                        str(n), str(t), label))
+                    edge = """edge: { sourcename: "%s" targetname: "%s"%s}\n""" % (
+                        str(n), str(t), label)
+                    out.write(bytes(edge, encoding="utf-8"))
 
-            out.write("}\n")
+            out.write(b"}\n")
 
     def dump(self):
         idaapi.msg("%d items:" % len(self.items))
@@ -232,17 +235,16 @@ class graph_builder_t(ida_hexrays.ctree_parentee_t):
         self.reverse = {} # citem_t -> node#
 
     def add_node(self, i):
-        for k in self.reverse.keys():
-            if i.obj_id == k.obj_id:
+        for k_obj_id in self.reverse.keys():
+            if i.obj_id == k_obj_id:
                 ida_kernwin.warning("bad ctree - duplicate nodes! (i.ea=%x)" % i.ea)
-                self.cg.dump()
                 return -1
 
         n = self.cg.add_node()
         if n <= len(self.cg.items):
             self.cg.items.append(i)
         self.cg.items[n] = i
-        self.reverse[i] = n
+        self.reverse[i.obj_id] = n
         return n
 
     def process(self, i):
@@ -251,8 +253,8 @@ class graph_builder_t(ida_hexrays.ctree_parentee_t):
             return n
         if len(self.parents) > 1:
             lp = self.parents.back().obj_id
-            for k, v in self.reverse.items():
-                if k.obj_id == lp:
+            for k_obj_id, v in self.reverse.items():
+                if k_obj_id == lp:
                     p = v
                     break
             self.cg.add_edge(p, n)
